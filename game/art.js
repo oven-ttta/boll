@@ -993,10 +993,24 @@ export const DollArt = (function () {
   // ฉากหลัง 720x720 — ใช้ไล่สี (fillGradientStyle) เพิ่มมิติ
   // ============================================================
 
-  // ไล่สีเต็มพื้นที่สี่เหลี่ยม
+  // ไล่สีเต็มพื้นที่สี่เหลี่ยม (แนวตั้ง)
+  // หมายเหตุสำคัญ: generateTexture อบผ่าน Canvas renderer ที่ "ข้าม" คำสั่ง
+  // fillGradientStyle ทั้งหมด ดังนั้นจึงต้องวาดไล่สีเองด้วยแถบสี solid หลายแถบ
+  // (interpolate สี top→bottom) เพื่อให้ฉากหลังติดสีจริงตอนอบเป็น texture
   function gradRect(g, x, y, w, h, top, bottom) {
-    g.fillGradientStyle(top, top, bottom, bottom, 1);
-    g.fillRect(x, y, w, h);
+    var tr = (top >> 16) & 0xff, tg = (top >> 8) & 0xff, tb = top & 0xff;
+    var br = (bottom >> 16) & 0xff, bg2 = (bottom >> 8) & 0xff, bb = bottom & 0xff;
+    var steps = 40;
+    for (var i = 0; i < steps; i++) {
+      var t = i / (steps - 1);
+      var r = Math.round(tr + (br - tr) * t);
+      var gg = Math.round(tg + (bg2 - tg) * t);
+      var b = Math.round(tb + (bb - tb) * t);
+      g.fillStyle((r << 16) | (gg << 8) | b, 1);
+      var sy = y + (h * i) / steps;
+      // ทับแถบให้เกยกันเล็กน้อยกันเส้นขอบขาว
+      g.fillRect(x, Math.floor(sy), w, Math.ceil(h / steps) + 1);
+    }
   }
 
   var BG_DRAWERS = [
@@ -1222,19 +1236,21 @@ export const DollArt = (function () {
       g.fillStyle(0xfff2f7, 1); g.fillRoundedRect(4, 4, 120, 120, 18);
       g.lineStyle(5, 0xff4f8b, 1); g.strokeRoundedRect(6, 6, 116, 116, 15);
     });
-    // แท็บหมวดหมู่ — การ์ดสูง (ไอคอน+ชื่อ 2 บรรทัด) ไล่สีอ่อน + เงา
+    // แท็บหมวดหมู่ — การ์ดขาวสะอาด + เงาลาเวนเดอร์ (ใช้ solid fill ล้วน
+    // เพราะ generateTexture อบผ่าน Canvas renderer ที่ "ข้าม" gradient fill)
     tex(scene, 'ui-tab', 128, 68, function (g) {
-      g.fillStyle(0xd0b6ee, 0.55); g.fillRoundedRect(5, 12, 118, 54, 19);   // เงาลาเวนเดอร์
-      g.fillGradientStyle(0xffffff, 0xffffff, 0xfbf6ff, 0xfbf6ff, 1);        // การ์ดขาวสะอาด
-      g.fillRoundedRect(2, 2, 124, 58, 18);
+      g.fillStyle(0xd0b6ee, 0.5); g.fillRoundedRect(5, 12, 118, 54, 19);   // เงา
+      g.fillStyle(0xffffff, 1);   g.fillRoundedRect(2, 2, 124, 58, 18);    // การ์ดขาว
+      g.fillStyle(0xf6effc, 1);   g.fillRoundedRect(2, 34, 124, 26, { tl: 0, tr: 0, bl: 18, br: 18 }); // ไล่โทนล่างจาง
       g.lineStyle(2, 0xecdff9, 1); g.strokeRoundedRect(3, 3, 122, 56, 17);
     });
-    // ปุ่มใหญ่ทรงพิลล์ — ไล่สี (ย้อม tint ทีหลัง) + เงานูน + ไฮไลต์
+    // ปุ่มใหญ่ทรงพิลล์ — ตัวปุ่มขาว (ย้อม tint = สีจริง) + เงานูน + ไฮไลต์วาว
+    // (ต้องเป็น solid fill; gradient จะไม่ติดตอน generateTexture)
     tex(scene, 'ui-btn', 172, 62, function (g) {
-      g.fillStyle(0x000000, 0.14); g.fillRoundedRect(4, 12, 164, 48, 26);
-      g.fillGradientStyle(0xffffff, 0xffffff, 0xdedede, 0xdedede, 1);
-      g.fillRoundedRect(2, 2, 168, 54, 27);
-      g.fillStyle(0xffffff, 0.45); g.fillRoundedRect(16, 8, 140, 15, 8);   // ไฮไลต์บน
+      g.fillStyle(0x3a2140, 0.18); g.fillRoundedRect(6, 15, 160, 45, 23);  // เงาใต้ปุ่ม
+      g.fillStyle(0xffffff, 1);    g.fillRoundedRect(2, 2, 168, 54, 27);   // ตัวปุ่ม (ย้อมเป็นสีจริง)
+      g.fillStyle(0x2a1030, 0.12); g.fillRoundedRect(8, 40, 156, 14, 12);  // เงาครึ่งล่าง (นูน)
+      g.fillStyle(0xffffff, 0.5);  g.fillRoundedRect(15, 8, 142, 15, 8);   // ไฮไลต์วาวด้านบน
     });
     // ตรากเครื่องหมายถูก (ติดมุมไอเทมที่เลือก)
     tex(scene, 'ui-check', 38, 38, function (g) {
