@@ -1,12 +1,20 @@
 # 🎀 เกมแต่งตัวตุ๊กตา (Dress-Up Doll Game)
 
-เกมแต่งตัวตุ๊กตาสไตล์น่ารัก สร้างด้วย [Phaser 3](https://phaser.io/) (เวอร์ชัน 3.90.0)
-กราฟิกทั้งหมด **วาดด้วยโค้ด** (Phaser Graphics → generateTexture) จึงไม่ต้องมีไฟล์รูปภาพเลย
+เกมแต่งตัวตุ๊กตาสไตล์น่ารัก สร้างด้วย [Phaser 4](https://phaser.io/) (เวอร์ชัน 4.2.0)
+ครอบด้วย [Next.js](https://nextjs.org/) (App Router) — กราฟิกทั้งหมด **วาดด้วยโค้ด**
+(Phaser Graphics → generateTexture) จึงไม่ต้องมีไฟล์รูปภาพเลย
 
-## ▶️ วิธีเล่น
+## ▶️ วิธีรัน (Next.js)
 
-ดับเบิลคลิกไฟล์ `index.html` ได้เลย — ไม่ต้องติดตั้งอะไร ไม่ต้องรัน server
-(Phaser ถูกดาวน์โหลดไว้ใน `lib/` แล้ว เล่นออฟไลน์ได้)
+```bash
+npm install      # ติดตั้ง next, react, phaser
+npm run dev      # โหมดพัฒนา → เปิด http://localhost:3000
+# หรือ
+npm run build && npm run start   # โหมด production
+```
+
+Phaser ต้องใช้ `window`/`document` จึงถูกโหลดแบบ **dynamic import ฝั่ง client เท่านั้น**
+(ดู `components/DressUpGame.js`) — ไม่รันตอน SSR
 
 | ปุ่ม | หน้าที่ |
 |---|---|
@@ -18,18 +26,38 @@
 
 ชุดที่แต่งไว้จะถูกจำอัตโนมัติ (localStorage) — ปิดเปิดใหม่ชุดเดิมยังอยู่
 
+## ✨ สิ่งที่ยกระดับ (เวอร์ชันปรับปรุง)
+
+- **งานอาร์ตตัวละคร** — ดวงตาไล่สีม่านตา + ประกาย + ขนตา, แก้มไล่จาง, เงาตัว/ไฮไลต์ผมให้ดูมีมิติ
+- **เนื้อหาเพิ่ม** — สีผิว 6, สีผม 9, ทรงผม 7 (มีผมมวย + เปียยาว), เสื้อ 8, ท่อนล่าง 7, รองเท้า 6, เครื่องประดับ 8, ฉากหลัง 6 (เพิ่มท้องฟ้ากลางคืน + คาเฟ่)
+- **ฉากหลังไล่สี** — ใช้ `fillGradientStyle` ให้ฟ้า/พื้น/ผนังนุ่มลึกขึ้น พร้อมรายละเอียด (ปราสาททราย, ธงราว, พระจันทร์เสี้ยว ฯลฯ)
+- **UI/UX + แอนิเมชัน** — พาร์ติเคิลลอยประจำฉาก (หัวใจ/กลีบ/ฟอง/ประกาย), แท็บ + ปุ่มมีฟีดแบ็กตอนกด/ชี้, ช่องไอเทมเข้าแบบ stagger, ตุ๊กตาเข้าฉากแบบเด้ง, toast เลื่อนขึ้น, ประกายตอนสวมใส่
+
 ## 📁 โครงสร้างโปรเจกต์
 
 ```
-index.html        ← หน้าเว็บหลัก (เปิดไฟล์นี้เพื่อเล่น)
-lib/
-  phaser.min.js   ← Phaser 3.90.0
-src/
-  main.js         ← ตั้งค่าเกม (ขนาดจอ 1280x720, Scale.FIT)
-  data.js         ← ข้อมูลไอเทมทุกชิ้น (ชื่อ, สี, ธง isDress ฯลฯ)
-  art.js          ← โค้ดวาดกราฟิกทั้งหมด (ตัวตุ๊กตา ผม เสื้อผ้า ฉาก UI)
-  scenes.js       ← PreloadScene (สร้างเท็กซ์เจอร์) + GameScene (เกมจริง)
+app/
+  layout.js        ← RootLayout (ตั้ง <title>, lang="th")
+  page.js          ← หน้าแรก render <DressUpGame />
+  globals.css      ← พื้นหลังไล่สี + สไตล์ canvas
+components/
+  DressUpGame.js   ← 'use client' — โหลด Phaser + สร้าง/ทำลายเกมตามวงจร React
+game/
+  createGame.js    ← ตั้งค่าเกม (ขนาดจอ 1280x720, Scale.FIT) → new Phaser.Game
+  data.js          ← ข้อมูลไอเทมทุกชิ้น (ชื่อ, สี, ธง isDress ฯลฯ)
+  art.js           ← โค้ดวาดกราฟิกทั้งหมด (ตัวตุ๊กตา ผม เสื้อผ้า ฉาก UI)
+  scenes.js        ← PreloadScene (สร้างเท็กซ์เจอร์) + GameScene (เกมจริง)
+next.config.mjs    ← ตั้งค่า Next.js
+jsconfig.json      ← alias @/* ชี้ราก โปรเจกต์
+
+(ไฟล์เดิม index.html, lib/, src/ เป็นเวอร์ชันสแตนด์อโลนก่อนแปลงเป็น Next.js
+ — ลบทิ้งได้ถ้าไม่ต้องการแล้ว)
 ```
+
+> **หมายเหตุการแปลง:** โค้ดเกมเดิม (ที่ผูกกับ `window`) ถูกแปลงเป็น ES module —
+> `window.DUP_DATA/DollArt/PreloadScene/GameScene` กลายเป็น `import`/`export` ปกติ
+> และฉากถูกเขียนใหม่จาก `new Phaser.Class({...})` เป็น `class extends Phaser.Scene`
+> (เพราะ Phaser ESM build ไม่มี `Phaser.Class`) โดยตรรกะเกมเหมือนเดิมทุกอย่าง
 
 ## 🧠 หลักการทำงานสำคัญ
 
